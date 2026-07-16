@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at top left, #1a2460 0, #0b1020 38%, #080b16 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+::selection {
+  background: #1d2857;
+  color: #eef3ff;
+}
+
+.focus-ring:focus-visible {
+  outline: 2px solid #00d4ff;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-scanline,
+  .animate-scanlineX {
+    animation: none !important;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-[20px] border border-scan-border bg-scan-surface/90 p-[22px] shadow-[0_20px_60px_rgba(0,0,0,.28)];
+  }
+  .card-light {
+    @apply rounded-[20px] border border-scan-border bg-scan-surface2/90 p-[22px] shadow-[0_20px_60px_rgba(0,0,0,.28)];
+  }
+  .hero {
+    @apply rounded-[28px] border border-scan-border p-8 sm:p-[42px] shadow-[0_30px_80px_rgba(0,0,0,.28)];
+    background: linear-gradient(135deg, rgba(124, 92, 255, 0.28), rgba(0, 212, 255, 0.09));
+  }
+  .btn {
+    @apply focus-ring rounded-[14px] px-5 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-40;
+    background: linear-gradient(90deg, #7c5cff, #4f8cff);
+  }
+  .btn-secondary {
+    @apply focus-ring rounded-[14px] border border-scan-border bg-scan-surface2 px-5 py-3 text-sm font-bold text-scan-text disabled:cursor-not-allowed disabled:opacity-40;
+  }
+  .pill {
+    @apply inline-flex rounded-full bg-[#1d2857] px-3 py-1.5 text-sm text-[#bfd0ff];
+  }
+  .field-input {
+    @apply focus-ring w-full rounded-xl border border-scan-border bg-[#0d1430] px-3.5 py-3 text-sm text-scan-text placeholder:text-scan-muted;
+  }
+}
