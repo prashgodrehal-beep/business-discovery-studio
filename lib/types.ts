@@ -116,6 +116,11 @@ export interface EnrichmentResult {
   businessModel?: "B2B" | "B2C" | "Both";
   productsServices?: string[];
   growthObjectives?: string[];
+  idealCustomer?: string;
+  buyingCycle?: string;
+  customerJourney?: string[];
+  supportExpectations?: string[];
+  repeatBusiness?: string;
   confidence: "high" | "medium" | "low";
 }
 

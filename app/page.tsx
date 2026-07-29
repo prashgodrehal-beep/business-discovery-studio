@@ -53,6 +53,23 @@ const stepLabels = [
   "Executive Blueprint",
 ];
 
+// Merges deterministically-detected tech signals (WordPress, WhatsApp link,
+// Calendly, etc.) into the profile's tech stack without clobbering anything
+// the person already picked, and without inventing a maturity rating —
+// that's for them to judge, not something scraping can tell us.
+function mergeTechStackDetected(
+  current: BusinessProfile["techStack"],
+  detected: Record<string, string[]>
+): BusinessProfile["techStack"] {
+  const next = { ...current };
+  for (const [category, tools] of Object.entries(detected)) {
+    const existingTools = next[category]?.tools ?? [];
+    const merged = Array.from(new Set([...existingTools, ...tools]));
+    next[category] = { tools: merged, maturity: next[category]?.maturity ?? "" };
+  }
+  return next;
+}
+
 export default function Home() {
   const [stepIndex, setStepIndex] = useState(0);
   const [profile, setProfile] = useState<BusinessProfile>(emptyProfile);
@@ -79,8 +96,17 @@ export default function Home() {
 
       if (data.error || !data.result) {
         setEnrichStatus("Couldn't read this site well enough to pre-fill — no problem, just fill in the profile on the next step.");
+        if (data.techStackDetected && Object.keys(data.techStackDetected).length > 0) {
+          setProfile((p) => ({
+            ...p,
+            techStack: mergeTechStackDetected(p.techStack, data.techStackDetected),
+          }));
+        }
       } else {
         const r = data.result;
+        const defaultedFields: string[] = data.defaultedFields ?? [];
+        const techDetected: Record<string, string[]> = data.techStackDetected ?? {};
+
         setProfile((p) => ({
           ...p,
           company: {
@@ -90,12 +116,23 @@ export default function Home() {
             productsServices: r.productsServices ?? p.company.productsServices,
             growthObjectives: r.growthObjectives ?? p.company.growthObjectives,
           },
+          customer: {
+            ...p.customer,
+            idealCustomer: r.idealCustomer ?? p.customer.idealCustomer,
+            buyingCycle: r.buyingCycle ?? p.customer.buyingCycle,
+            customerJourney: r.customerJourney ?? p.customer.customerJourney,
+            supportExpectations: r.supportExpectations ?? p.customer.supportExpectations,
+            repeatBusiness: r.repeatBusiness ?? p.customer.repeatBusiness,
+          },
+          techStack: mergeTechStackDetected(p.techStack, techDetected),
         }));
-        setEnrichStatus(
-          r.confidence === "low"
-            ? "Got a rough read from the homepage (low confidence) — worth double-checking on the next step."
-            : "Pre-filled the Company section from the homepage — confirm or correct on the next step."
-        );
+
+        const parts: string[] = [
+          r.confidence === "low" ? "Got a rough read from the homepage (low confidence)" : "Pre-filled Company + Customer sections from the homepage",
+        ];
+        if (defaultedFields.length > 0) parts.push(`applied typical ${r.businessModel ?? "B2B"} defaults for ${defaultedFields.join(", ")}`);
+        if (Object.keys(techDetected).length > 0) parts.push(`detected ${Object.values(techDetected).flat().join(", ")} from the site`);
+        setEnrichStatus(parts.join(" — ") + " — confirm or correct on the next step.");
       }
     } catch {
       setEnrichStatus("Couldn't reach the enrichment service — fill in the profile manually on the next step.");
