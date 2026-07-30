@@ -6,6 +6,7 @@ function baseProfile(): BusinessProfile {
     websiteUrl: "",
     focusGoal: "",
     focusArea: "",
+    industryArchetype: "",
     company: { industry: "", businessModel: "B2B", businessType: "", productsServices: [], annualRevenue: undefined, employeeCount: "", locations: 1, growthObjectives: [] },
     customer: { idealCustomer: "", averageDealSize: undefined, buyingCycle: "", customerJourney: [], repeatBusiness: "", supportExpectations: [] },
     departments: ["sales", "ceo", "support"],

@@ -17,6 +17,7 @@ const emptyProfile: BusinessProfile = {
   websiteUrl: "",
   focusGoal: "",
   focusArea: "",
+  industryArchetype: "",
   company: {
     industry: "",
     businessModel: "",
@@ -167,6 +168,8 @@ export default function Home() {
             focusGoal={profile.focusGoal}
             focusArea={profile.focusArea}
             onFocusGoalChange={(v) => setProfile((p) => ({ ...p, focusGoal: v }))}
+            industryArchetype={profile.industryArchetype}
+            onIndustryArchetypeChange={(v) => setProfile((p) => ({ ...p, industryArchetype: v }))}
             onFocusAreaChange={(v) =>
               setProfile((p) => {
                 const next = { ...p, focusArea: v };

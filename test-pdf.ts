@@ -7,6 +7,7 @@ const profile: BusinessProfile = {
   websiteUrl: "",
   focusGoal: "revenue",
   focusArea: "customer_facing",
+  industryArchetype: "",
   company: {
     industry: "Industrial equipment manufacturing",
     businessModel: "B2B",

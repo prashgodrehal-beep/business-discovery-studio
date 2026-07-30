@@ -4,16 +4,21 @@ import { useState } from "react";
 import { BusinessProfile, GeneratedResults } from "@/lib/types";
 import { formatINR } from "@/lib/format";
 import { computeAgentProductivity } from "@/lib/agentProductivity";
+import { computeFinancingOptions, buildScalingTable } from "@/lib/investmentOptions";
+import { getArchetypeLabels } from "@/lib/industryArchetypes";
 import { MetricCard, MetricGroup, StepHeading } from "../ResultsPrimitives";
 
 export default function InvestmentROIStep({ profile, results }: { profile: BusinessProfile; results: GeneratedResults }) {
   const f = results.financials;
   const m = profile.metrics;
+  const dealUnitLabel = `${getArchetypeLabels(profile.industryArchetype).dealUnit}s`;
   const [lean, setLean] = useState(0.5);
   const agentRows = computeAgentProductivity(profile, results.opportunities, lean);
   const totalAgentValue = agentRows.reduce((sum, r) => sum + r.monthlyValue, 0);
   const totalAgentCost = agentRows.reduce((sum, r) => sum + r.agentMonthlyCost, 0);
   const valueMultiple = totalAgentCost > 0 ? Math.round((totalAgentValue / totalAgentCost) * 10) / 10 : 0;
+  const financingOptions = results.investment.activeAgentCount > 0 ? computeFinancingOptions(results.investment) : [];
+  const scalingTable = buildScalingTable(results.investment.activeAgentCount || 4);
 
   const hasCurrencyFigures =
     f.revenueGrowth.additionalRevenueMonthly !== undefined ||
@@ -39,7 +44,7 @@ export default function InvestmentROIStep({ profile, results }: { profile: Busin
           <MetricCard
             label="Lead leakage recovered"
             value={`-${f.revenueGrowth.leadLeakageReductionPct.value}%`}
-            subValue={f.revenueGrowth.additionalDealsPerMonth !== undefined ? `+${f.revenueGrowth.additionalDealsPerMonth.value} deals/mo` : undefined}
+            subValue={f.revenueGrowth.additionalDealsPerMonth !== undefined ? `+${f.revenueGrowth.additionalDealsPerMonth.value} ${dealUnitLabel}/mo` : undefined}
             source={f.revenueGrowth.leadLeakageReductionPct.source}
           />
           {f.revenueGrowth.growthTargetPct !== undefined && (
@@ -171,6 +176,58 @@ export default function InvestmentROIStep({ profile, results }: { profile: Busin
           {results.investment.paybackDays === undefined && (
             <p className="mt-4 text-sm text-scan-muted">Add monthly revenue and/or support cost in Business Metrics for a payback estimate.</p>
           )}
+        </div>
+      )}
+
+      {financingOptions.length > 0 && (
+        <div className="card mt-6">
+          <h2 className="mb-1 text-lg font-bold text-scan-text">Investment options</h2>
+          <p className="mb-4 text-sm text-scan-muted">
+            Same underlying investment, structured three ways — the way a consulting engagement typically offers Fixed /
+            Fixed+Variable / Retainer pricing. Pick whichever fits the room's appetite for upfront commitment.
+          </p>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {financingOptions.map((opt) => (
+              <div key={opt.key} className="card-light">
+                <p className="text-sm font-bold text-scan-text">{opt.label}</p>
+                <p className="mb-3 text-xs text-scan-muted">{opt.description}</p>
+                <p className="text-xs text-scan-muted">Due at signing</p>
+                <p className="mb-2 text-lg font-extrabold text-scan-text">{opt.upfrontDue > 0 ? formatINR(opt.upfrontDue) : "₹0"}</p>
+                <p className="text-xs text-scan-muted">Monthly</p>
+                <p className="mb-2 text-lg font-extrabold text-scan-text">{formatINR(opt.monthlyCost)}</p>
+                <p className="text-xs text-scan-muted">First-year total: {formatINR(opt.totalFirstYearCost)}</p>
+              </div>
+            ))}
+          </div>
+
+          <h3 className="mb-2 mt-6 text-sm font-bold text-scan-text">How cost scales with more agents</h3>
+          <p className="mb-3 text-xs text-scan-muted">The marginal cost of the next agent, shown transparently — not a single flat number in isolation.</p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="text-xs text-scan-muted">
+                  <th className="pb-2 pr-4">Agents</th>
+                  <th className="pb-2 pr-4">One-time</th>
+                  <th className="pb-2">Monthly recurring</th>
+                </tr>
+              </thead>
+              <tbody>
+                {scalingTable.map((row) => (
+                  <tr
+                    key={row.agentCount}
+                    className={`border-t border-scan-border ${row.agentCount === results.investment.activeAgentCount ? "bg-scan-tealDim/40" : ""}`}
+                  >
+                    <td className="py-2 pr-4">
+                      {row.agentCount}
+                      {row.agentCount === results.investment.activeAgentCount ? " (this plan)" : ""}
+                    </td>
+                    <td className="py-2 pr-4">{formatINR(row.oneTimeInvestment)}</td>
+                    <td className="py-2">{formatINR(row.monthlyRecurring)}/mo</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

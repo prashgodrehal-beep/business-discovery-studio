@@ -4,6 +4,8 @@ import { BusinessProfile, GeneratedResults, SourcedNumber, EstimateSource } from
 import { formatINR } from "../format";
 import { departmentTemplates } from "../departmentTemplates";
 import { buildWorkforceOrg } from "../workforce";
+import { computeFinancingOptions } from "../investmentOptions";
+import { getArchetypeLabels } from "../industryArchetypes";
 
 // Light, print-friendly theme — the app's dark navy/purple works on screen
 // but not on paper. Same brand accent hues, darkened for contrast on white.
@@ -114,6 +116,8 @@ export default function BlueprintDocument({ profile, results }: { profile: Busin
   const f = results.financials;
   const deploymentOrder = [...results.opportunities].sort((a, b) => b.priorityStars - a.priorityStars);
   const org = buildWorkforceOrg(results.departmentWorkflows, results.maturity);
+  const financingOptions = results.investment.activeAgentCount > 0 ? computeFinancingOptions(results.investment) : [];
+  const archetypeLabels = getArchetypeLabels(profile.industryArchetype);
   const today = new Date().toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" });
 
   const verdict =
@@ -184,11 +188,11 @@ export default function BlueprintDocument({ profile, results }: { profile: Busin
               <Text style={s.td}>{profile.company.employeeCount || "—"}</Text>
             </View>
             <View style={{ width: "50%", marginBottom: 6 }}>
-              <Text style={s.th}>Ideal customer</Text>
+              <Text style={s.th}>{archetypeLabels.idealCustomer}</Text>
               <Text style={s.td}>{profile.customer.idealCustomer || "—"}</Text>
             </View>
             <View style={{ width: "50%", marginBottom: 6 }}>
-              <Text style={s.th}>Average deal size</Text>
+              <Text style={s.th}>{archetypeLabels.averageDealSize}</Text>
               <Text style={s.td}>{profile.customer.averageDealSize ? formatINR(profile.customer.averageDealSize) : "—"}</Text>
             </View>
           </View>
@@ -295,7 +299,7 @@ export default function BlueprintDocument({ profile, results }: { profile: Busin
         <Text style={s.h3}>Revenue growth</Text>
         <View style={s.metricGrid}>
           <MetricBox label="Revenue growth" value={pct(f.revenueGrowth.revenueGrowthPct)} subValue={f.revenueGrowth.additionalRevenueMonthly ? `+${formatINR(f.revenueGrowth.additionalRevenueMonthly.value)}/mo` : undefined} source={f.revenueGrowth.revenueGrowthPct.source} />
-          <MetricBox label="Lead leakage recovered" value={pct(f.revenueGrowth.leadLeakageReductionPct, "-")} subValue={f.revenueGrowth.additionalDealsPerMonth ? `+${f.revenueGrowth.additionalDealsPerMonth.value} deals/mo` : undefined} source={f.revenueGrowth.leadLeakageReductionPct.source} />
+          <MetricBox label="Lead leakage recovered" value={pct(f.revenueGrowth.leadLeakageReductionPct, "-")} subValue={f.revenueGrowth.additionalDealsPerMonth ? `+${f.revenueGrowth.additionalDealsPerMonth.value} ${archetypeLabels.dealUnit}s/mo` : undefined} source={f.revenueGrowth.leadLeakageReductionPct.source} />
           {f.revenueGrowth.growthTargetPct !== undefined && (
             <MetricBox label="Their 6-12mo target" value={`${f.revenueGrowth.growthTargetPct}%`} subValue={`AI closes ~${f.revenueGrowth.pctOfTargetClosed}%`} />
           )}
@@ -337,6 +341,22 @@ export default function BlueprintDocument({ profile, results }: { profile: Busin
             subValue={results.investment.monthlyBenefit ? `Based on ${formatINR(results.investment.monthlyBenefit)}/mo benefit` : undefined}
           />
         </View>
+
+        {financingOptions.length > 0 && (
+          <>
+            <Text style={s.h3}>Investment options</Text>
+            <View style={[s.row, { gap: 8, marginBottom: 10 }]}>
+              {financingOptions.map((opt, i) => (
+                <View key={i} style={{ flex: 1, backgroundColor: color.bg, borderRadius: 6, padding: 8 }}>
+                  <Text style={[s.td, { fontFamily: "Helvetica-Bold" }]}>{opt.label}</Text>
+                  <Text style={s.muted}>Due at signing: {opt.upfrontDue > 0 ? formatINR(opt.upfrontDue) : "₹0"}</Text>
+                  <Text style={s.muted}>Monthly: {formatINR(opt.monthlyCost)}</Text>
+                  <Text style={s.muted}>First-year total: {formatINR(opt.totalFirstYearCost)}</Text>
+                </View>
+              ))}
+            </View>
+          </>
+        )}
 
         <Footer companyLabel={companyLabel} />
       </Page>

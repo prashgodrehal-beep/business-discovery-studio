@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { FocusArea, FocusGoal } from "@/lib/types";
+import { FocusArea, FocusGoal, IndustryArchetype } from "@/lib/types";
+import { archetypeOptions } from "@/lib/industryArchetypes";
 
 interface Props {
   websiteUrl: string;
@@ -13,6 +14,8 @@ interface Props {
   focusArea: FocusArea;
   onFocusGoalChange: (v: FocusGoal) => void;
   onFocusAreaChange: (v: FocusArea) => void;
+  industryArchetype: IndustryArchetype;
+  onIndustryArchetypeChange: (v: IndustryArchetype) => void;
 }
 
 const quickIndustries = ["Real Estate", "Coaching / Consulting", "Healthcare", "Manufacturing", "SaaS", "Industrial"];
@@ -39,6 +42,8 @@ export default function StartDiscoveryStep({
   focusArea,
   onFocusGoalChange,
   onFocusAreaChange,
+  industryArchetype,
+  onIndustryArchetypeChange,
 }: Props) {
   const [value, setValue] = useState(websiteUrl);
 
@@ -70,7 +75,7 @@ export default function StartDiscoveryStep({
           ))}
         </div>
         <p className="mb-2 text-xs text-scan-muted">Focus department area</p>
-        <div className="flex flex-wrap gap-2">
+        <div className="mb-4 flex flex-wrap gap-2">
           {focusAreaOptions.map((opt) => (
             <button
               key={opt.key}
@@ -84,10 +89,24 @@ export default function StartDiscoveryStep({
           ))}
         </div>
         {focusArea === "internal" && (
-          <p className="mt-3 text-xs text-scan-teal">
+          <p className="mb-4 text-xs text-scan-teal">
             HR, Finance, and Operations will be added to the department picker automatically on the next step.
           </p>
         )}
+        <p className="mb-2 text-xs text-scan-muted">Industry — changes the vocabulary the Business Profile form uses</p>
+        <div className="flex flex-wrap gap-2">
+          {archetypeOptions.map((opt) => (
+            <button
+              key={opt.key}
+              onClick={() => onIndustryArchetypeChange(opt.key)}
+              className={`focus-ring rounded-full px-3.5 py-1.5 text-sm transition-colors ${
+                industryArchetype === opt.key ? "bg-scan-accent text-white" : "bg-[#1d2857] text-[#bfd0ff] hover:brightness-125"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">

@@ -5,6 +5,7 @@ import ChipGroup from "./ChipGroup";
 import CurrencyField from "./CurrencyField";
 import DepartmentPicker from "./DepartmentPicker";
 import { painPointOptions, departmentTemplates } from "@/lib/departmentTemplates";
+import { getArchetypeLabels } from "@/lib/industryArchetypes";
 
 interface Props {
   profile: BusinessProfile;
@@ -166,6 +167,7 @@ function NumberField({
 }
 
 export default function ProfileForm({ profile, setProfile }: Props) {
+  const labels = getArchetypeLabels(profile.industryArchetype);
   const jumpLinks = [
     { id: "company", label: "Company" },
     { id: "customer", label: "Customer" },
@@ -252,7 +254,7 @@ export default function ProfileForm({ profile, setProfile }: Props) {
       </Section>
 
       <Section id="customer" title="Customer profile">
-        <Field label="Ideal customer">
+        <Field label={labels.idealCustomer}>
           <input
             value={profile.customer.idealCustomer}
             onChange={(e) => setProfile((p) => ({ ...p, customer: { ...p.customer, idealCustomer: e.target.value } }))}
@@ -261,11 +263,11 @@ export default function ProfileForm({ profile, setProfile }: Props) {
           />
         </Field>
         <CurrencyField
-          label="Average deal size"
+          label={labels.averageDealSize}
           value={profile.customer.averageDealSize}
           onChange={(v) => setProfile((p) => ({ ...p, customer: { ...p.customer, averageDealSize: v } }))}
         />
-        <Field label="Buying cycle">
+        <Field label={labels.buyingCycle}>
           <ChipGroup
             multi={false}
             options={buyingCycleOptions.map((r) => ({ key: r, label: r }))}
@@ -469,13 +471,13 @@ export default function ProfileForm({ profile, setProfile }: Props) {
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <NumberField
-            label="Monthly leads / inquiries"
+            label={labels.monthlyLeads}
             value={profile.metrics.monthlyLeads}
             onChange={(v) => setProfile((p) => ({ ...p, metrics: { ...p.metrics, monthlyLeads: v } }))}
             suffix="/ month"
           />
           <NumberField
-            label="Lead-to-customer conversion"
+            label={labels.conversionRatePct}
             value={profile.metrics.conversionRatePct}
             onChange={(v) => setProfile((p) => ({ ...p, metrics: { ...p.metrics, conversionRatePct: v } }))}
             suffix="%"

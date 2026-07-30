@@ -60,11 +60,13 @@ export interface AIAdoptionEntry {
 
 export type FocusGoal = "revenue" | "profit" | "cost" | "efficiency" | "";
 export type FocusArea = "customer_facing" | "internal" | "";
+export type IndustryArchetype = "real_estate" | "coaching_education" | "healthcare_pharma" | "retail_d2c" | "generic_b2b" | "generic_b2c" | "";
 
 export interface BusinessProfile {
   websiteUrl: string;
   focusGoal: FocusGoal;
   focusArea: FocusArea;
+  industryArchetype: IndustryArchetype;
   company: {
     industry: string;
     businessModel: "B2B" | "B2C" | "Both" | "";
