@@ -14,12 +14,17 @@ const phaseLabel: Record<AgentPhase, string> = {
   roadmap: "Roadmap",
 };
 
-function Node({ label, phase, sub }: { label: string; phase: AgentPhase | "human"; sub?: string }) {
+function Node({ label, phase, sub, foundationNote }: { label: string; phase: AgentPhase | "human"; sub?: string; foundationNote?: string }) {
   const toneClass = phase === "human" ? "border-[#378ADD]/50 bg-[#0f1f38] text-[#a9d0ff]" : phaseStyle[phase];
   return (
-    <div className={`rounded-[14px] border px-4 py-2.5 text-center text-sm ${toneClass}`}>
+    <div className={`max-w-[220px] rounded-[14px] border px-4 py-2.5 text-center text-sm ${toneClass}`}>
       <p>{label}</p>
       <p className="mt-0.5 text-[10px] uppercase tracking-wide opacity-80">{sub ?? (phase !== "human" ? phaseLabel[phase] : undefined)}</p>
+      {foundationNote && (
+        <p className="mt-1.5 rounded-md bg-scan-amberDim px-1.5 py-1 text-[10px] normal-case leading-snug text-scan-amber">
+          ⚠ Foundation needed: {foundationNote}
+        </p>
+      )}
     </div>
   );
 }
@@ -40,7 +45,7 @@ export default function AIWorkforceOrg({ org, ceoLabel = "CEO" }: { org: Workfor
       {org.supervisor && (
         <>
           <Connector />
-          <Node label={org.supervisor.label} phase={org.supervisor.phase} sub="Orchestrator" />
+          <Node label={org.supervisor.label} phase={org.supervisor.phase} sub="Orchestrator" foundationNote={org.supervisor.foundationNote} />
         </>
       )}
 
@@ -49,7 +54,7 @@ export default function AIWorkforceOrg({ org, ceoLabel = "CEO" }: { org: Workfor
           <Connector />
           <div className="flex flex-wrap justify-center gap-2.5">
             {org.specialists.map((s) => (
-              <Node key={s.label} label={s.label} phase={s.phase} />
+              <Node key={s.label} label={s.label} phase={s.phase} foundationNote={s.foundationNote} />
             ))}
           </div>
         </>

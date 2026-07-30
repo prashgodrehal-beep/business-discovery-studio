@@ -1,11 +1,13 @@
-import { GeneratedResults } from "./types";
+import { GeneratedResults, MaturityScores } from "./types";
 import { investmentAssumptions } from "./assumptions";
+import { checkFoundation } from "./maturity";
 
 export type AgentPhase = "start" | "priority" | "roadmap";
 
 export interface WorkforceAgent {
   label: string;
   phase: AgentPhase;
+  foundationNote?: string;
 }
 
 export interface HumanRoleGroup {
@@ -24,8 +26,10 @@ export interface WorkforceOrg {
 // Only steps whose label contains "Agent" count as a named specialist.
 // However many pain points are selected, only the top N (by priority) are
 // tagged "start" — the rest become "priority" (relevant, but phase 2) or
-// "roadmap" (not tied to a selected pain point at all).
-export function buildWorkforceOrg(departmentWorkflows: GeneratedResults["departmentWorkflows"]): WorkforceOrg {
+// "roadmap" (not tied to a selected pain point at all). Independently, every
+// agent is checked against the Maturity Layer — an agent can be "start now"
+// priority-wise and still carry a "foundation needed first" caveat.
+export function buildWorkforceOrg(departmentWorkflows: GeneratedResults["departmentWorkflows"], maturity: MaturityScores): WorkforceOrg {
   const priorityLabels: string[] = [];
   const roadmapLabels: string[] = [];
   const seen = new Set<string>();
@@ -53,10 +57,16 @@ export function buildWorkforceOrg(departmentWorkflows: GeneratedResults["departm
 
   const startCount = investmentAssumptions.recommendedStartCount;
   const specialists: WorkforceAgent[] = [
-    ...priorityLabels.map((label, i) => ({ label, phase: (i < startCount ? "start" : "priority") as AgentPhase })),
-    ...roadmapLabels.map((label) => ({ label, phase: "roadmap" as AgentPhase })),
+    ...priorityLabels.map((label, i) => ({
+      label,
+      phase: (i < startCount ? "start" : "priority") as AgentPhase,
+      foundationNote: checkFoundation(label, maturity)?.note,
+    })),
+    ...roadmapLabels.map((label) => ({ label, phase: "roadmap" as AgentPhase, foundationNote: checkFoundation(label, maturity)?.note })),
   ];
 
-  const supervisor: WorkforceAgent | null = supervisorLabel ? { label: supervisorLabel, phase: "start" } : null;
+  const supervisor: WorkforceAgent | null = supervisorLabel
+    ? { label: supervisorLabel, phase: "start", foundationNote: checkFoundation(supervisorLabel, maturity)?.note }
+    : null;
   return { supervisor, specialists, humanRoles };
 }

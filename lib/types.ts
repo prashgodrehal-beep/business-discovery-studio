@@ -135,6 +135,21 @@ export interface OpportunityRow {
   roi: "High" | "Medium" | "Low";
   difficulty: "Low" | "Medium" | "High";
   priorityStars: number;
+  foundationNeeded?: { note: string };
+}
+
+// The Founder Evolution Pyramid / Decision OS Framework, operationalized:
+// an AI agent is only as good as the foundation under it. Process/Visibility/
+// Automation are assessed from data already in the profile — Intelligence and
+// Decision OS are what the agents themselves unlock, not something to assess
+// as already present.
+export type MaturityLayer = "process" | "visibility" | "automation";
+
+export interface MaturityScores {
+  process: number;
+  visibility: number;
+  automation: number;
+  currentLevel: number; // 1-4 assessed today; level 5 (Decision OS) is aspirational
 }
 
 // "calculated" = pure arithmetic on real numbers the business gave us, no
@@ -191,6 +206,7 @@ export interface GeneratedResults {
   opportunities: OpportunityRow[];
   financials: FinancialImpact;
   readinessScore: number;
+  maturity: MaturityScores;
   investment: InvestmentEstimate;
   departmentWorkflows: {
     department: DepartmentKey;

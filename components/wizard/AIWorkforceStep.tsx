@@ -6,7 +6,7 @@ import AIWorkforceOrg from "../AIWorkforceOrg";
 import { StepHeading } from "../ResultsPrimitives";
 
 export default function AIWorkforceStep({ results }: { results: GeneratedResults }) {
-  const org = buildWorkforceOrg(results.departmentWorkflows);
+  const org = buildWorkforceOrg(results.departmentWorkflows, results.maturity);
 
   return (
     <div>

@@ -1,3 +1,5 @@
+import type { MaturityLayer } from "./types";
+
 // This file is the single place where every "we assumed X%" number in the
 // tool comes from. Nothing here is a borrowed statistic from a marketing
 // blog — published numbers in this space (AI chatbot conversion rates,
@@ -61,8 +63,8 @@ export const supportAutomationCaptureRange: [number, number] = [0.7, 0.85];
 export const agentHumanEquivalent: Record<string, { roleLabel: string; department: string; fraction: [number, number] }> = {
   "Lead Agent": { roleLabel: "SDR / lead qualifier", department: "sales", fraction: [0.5, 1.0] },
   "Follow-up Agent": { roleLabel: "sales follow-up coordinator", department: "sales", fraction: [0.4, 0.8] },
-  "Support / Knowledge Agent": { roleLabel: "support agent", department: "support", fraction: [0.6, 1.0] },
-  "Ad Spend / Analytics Agent": { roleLabel: "marketing analyst", department: "marketing", fraction: [0.3, 0.6] },
+  "Support Agent": { roleLabel: "support agent", department: "support", fraction: [0.6, 1.0] },
+  "Ad Spend Agent": { roleLabel: "marketing analyst", department: "marketing", fraction: [0.3, 0.6] },
   "Supervisor Agent (CEO Command Center)": { roleLabel: "executive assistant / chief of staff", department: "ceo", fraction: [0.3, 0.5] },
   "Onboarding Agent": { roleLabel: "HR coordinator", department: "hr", fraction: [0.3, 0.6] },
 };
@@ -78,6 +80,21 @@ export const typicalFullyLoadedMonthlyCost: Record<string, [number, number]> = {
   customerSuccess: [30000, 50000],
   finance: [35000, 60000],
   operations: [30000, 55000],
+};
+
+// --- Maturity Layer prerequisites (Founder Evolution Pyramid / Decision OS) ---
+// An agent is only as good as the foundation under it — a Follow-up Agent is
+// useless without a CRM to follow up from; a Data Analyst Agent is useless
+// without dashboards to analyze. Keys are matched against both the
+// Opportunity Matrix name and the workflow step label via string.includes(),
+// so keep them as the short, branding-free core phrase both share.
+export const agentPrerequisites: Record<string, { layer: MaturityLayer; minScore: number; note: string }> = {
+  "Lead Agent": { layer: "process", minScore: 40, note: "Needs a CRM or clear lead-tracking process in place" },
+  "Follow-up Agent": { layer: "process", minScore: 40, note: "Needs a CRM or clear process to know who to follow up with" },
+  "Support Agent": { layer: "process", minScore: 30, note: "Needs at least a basic knowledge base or FAQ doc" },
+  "Supervisor Agent": { layer: "visibility", minScore: 50, note: "Needs dashboards/reporting to make decisions from" },
+  "Ad Spend Agent": { layer: "visibility", minScore: 40, note: "Needs campaign data/dashboards to analyze" },
+  "Onboarding Agent": { layer: "process", minScore: 30, note: "Needs a documented onboarding process" },
 };
 
 export const investmentAssumptions = {

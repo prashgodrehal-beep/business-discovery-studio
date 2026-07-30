@@ -16,16 +16,19 @@ import {
   supportAutomationCaptureRange,
   investmentAssumptions,
 } from "./assumptions";
+import { computeMaturityScores, checkFoundation } from "./maturity";
 
 // Deterministic pain-point -> AI opportunity mapping. This is the "Dynamic
-// Matrix Engine" — no AI call, instant results.
+// Matrix Engine" — no AI call, instant results. Names are kept consistent
+// with the workflow step labels in departmentTemplates.ts (no "/" combos)
+// so the Maturity Layer's prerequisite matching works via simple substring.
 const opportunityMap: Record<PainPointKey, OpportunityRow> = {
   unqualified_leads: { opportunity: "Lead Agent", roi: "High", difficulty: "Low", priorityStars: 5 },
   manual_followup: { opportunity: "Follow-up Agent", roi: "High", difficulty: "Medium", priorityStars: 4 },
-  repetitive_questions: { opportunity: "Support / Knowledge Agent", roi: "High", difficulty: "Low", priorityStars: 4 },
+  repetitive_questions: { opportunity: "Support Agent", roi: "High", difficulty: "Low", priorityStars: 4 },
   too_many_approvals: { opportunity: "Supervisor Agent (CEO Command Center)", roi: "Medium", difficulty: "Medium", priorityStars: 3 },
   manual_onboarding: { opportunity: "Onboarding Agent", roi: "Medium", difficulty: "Medium", priorityStars: 3 },
-  poor_campaign_roi: { opportunity: "Ad Spend / Analytics Agent", roi: "Medium", difficulty: "Medium", priorityStars: 3 },
+  poor_campaign_roi: { opportunity: "Ad Spend Agent", roi: "Medium", difficulty: "Medium", priorityStars: 3 },
 };
 
 function cap(n: number, max: number) {
@@ -52,7 +55,11 @@ export function generateResults(profile: BusinessProfile): GeneratedResults {
     .filter((p) => selectedPainPoints.includes(p.key as PainPointKey))
     .map((p) => ({ area: p.area, observation: p.label, impact: p.impact }));
 
-  const opportunities: OpportunityRow[] = selectedPainPoints.map((key) => opportunityMap[key]);
+  const maturity = computeMaturityScores(profile);
+  const opportunities: OpportunityRow[] = selectedPainPoints.map((key) => ({
+    ...opportunityMap[key],
+    foundationNeeded: checkFoundation(opportunityMap[key].opportunity, maturity),
+  }));
 
   // --- Revenue growth ---
   const leadLeakageReductionPct: SourcedNumber = {
@@ -160,7 +167,7 @@ export function generateResults(profile: BusinessProfile): GeneratedResults {
   const monthlyBenefit = (additionalRevenueMonthly?.value ?? 0) + (supportCostSavingsMonthly?.value ?? 0);
   const investment = computeInvestment(opportunities.length, monthlyBenefit);
 
-  return { heatmap, opportunities, financials, readinessScore, investment, departmentWorkflows };
+  return { heatmap, opportunities, financials, readinessScore, maturity, investment, departmentWorkflows };
 }
 
 const impactWeight: Record<"High" | "Medium" | "Low", number> = { High: 12, Medium: 7, Low: 4 };
