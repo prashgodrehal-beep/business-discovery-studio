@@ -49,6 +49,19 @@ function sumDirectional(painPoints: PainPointKey[], metric: keyof (typeof direct
   return total;
 }
 
+// A "calculated" funnel result is more trustworthy than a directional
+// guess, so it's allowed some headroom above the directional cap — but that
+// headroom itself must be business-type-aware. A product/manufacturing
+// business is capacity-constrained no matter how the funnel math comes out,
+// so it gets almost no extra headroom; a service business's capacity
+// genuinely scales with effectiveness, so it gets much more.
+const calculatedGrowthBufferByBusinessType: Record<string, number> = {
+  service: 25,
+  product: 0,
+  hybrid: 10,
+  "": 25, // unknown business type — unchanged prior behavior
+};
+
 export function generateResults(profile: BusinessProfile): GeneratedResults {
   const selectedPainPoints = profile.painPoints;
   const m = profile.metrics;
@@ -88,10 +101,30 @@ export function generateResults(profile: BusinessProfile): GeneratedResults {
 
   let revenueGrowthPct: SourcedNumber;
   const growthCap = revenueGrowthCapByBusinessType[profile.company.businessType] ?? 35;
+  const calculatedCap = growthCap + (calculatedGrowthBufferByBusinessType[profile.company.businessType] ?? 25);
+
+  // Cap the ₹ figure itself, not just the derived % — capping only the %
+  // while leaving the ₹ uncapped would reintroduce the exact "these two
+  // numbers contradict each other" bug fixed earlier.
+  if (additionalRevenueMonthly?.source === "calculated" && m.monthlyRevenue) {
+    const impliedPct = (additionalRevenueMonthly.value / m.monthlyRevenue) * 100;
+    if (impliedPct > calculatedCap) {
+      const cappedValue = Math.round(m.monthlyRevenue * (calculatedCap / 100));
+      const scaleFactor = cappedValue / additionalRevenueMonthly.value;
+      additionalRevenueMonthly = { value: cappedValue, source: "calculated" };
+      // Scale the displayed deal count by the same factor — otherwise "+2.2
+      // deals/mo" would sit next to a ₹ figure that no longer implies 2.2
+      // deals, quietly contradicting each other again.
+      if (additionalDealsPerMonth) {
+        additionalDealsPerMonth = { value: Math.round(additionalDealsPerMonth.value * scaleFactor * 10) / 10, source: "calculated" };
+      }
+    }
+  }
+
   if (additionalRevenueMonthly?.source === "calculated" && m.monthlyRevenue) {
     // Derive the % FROM the ₹ figure instead of computing both separately —
     // otherwise the % and the ₹ can quietly contradict each other in the UI.
-    revenueGrowthPct = { value: cap((additionalRevenueMonthly.value / m.monthlyRevenue) * 100, growthCap + 25), source: "calculated" };
+    revenueGrowthPct = { value: cap((additionalRevenueMonthly.value / m.monthlyRevenue) * 100, calculatedCap), source: "calculated" };
   } else {
     revenueGrowthPct = { value: cap(sumDirectional(selectedPainPoints, "revenueGrowthPct"), growthCap), source: "directional" };
     if (!additionalRevenueMonthly && m.monthlyRevenue && revenueGrowthPct.value > 0) {
