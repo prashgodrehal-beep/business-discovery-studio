@@ -31,6 +31,7 @@ export interface BusinessMetrics {
   growthTargetPct?: number; // their own 6-12 month target, for comparison
   currentApprovalHoursPerWeek?: number; // lets CEO time-saved be calculated, not a headcount guess
   repetitiveTicketsPct?: number; // lets support savings be calculated, not a flat assumption
+  grossMarginPct?: number; // powers the separate Profit Impact lens — never blended into payback
 }
 
 export interface DataReadiness {
@@ -65,6 +66,7 @@ export interface BusinessProfile {
   company: {
     industry: string;
     businessModel: "B2B" | "B2C" | "Both" | "";
+    businessType: "service" | "product" | "hybrid" | "";
     productsServices: string[];
     annualRevenue?: number; // exact ₹, not a band
     employeeCount: string;
@@ -83,6 +85,7 @@ export interface BusinessProfile {
   techStack: Record<string, TechStackEntry>;
   aiAdoption: AIAdoptionEntry[];
   painPoints: PainPointKey[];
+  otherPainPoints: string;
   metrics: BusinessMetrics;
   dataReadiness: DataReadiness;
 }
@@ -201,12 +204,23 @@ export interface InvestmentEstimate {
   paybackDays?: number; // only computable when we have currency benefit figures
 }
 
+// A deliberately SEPARATE lens from payback — margin-adjusted, useful for a
+// CFO-minded room, but never blended into the Investment & Payback numbers.
+// Cost savings count in full (they hit profit dollar-for-dollar); revenue
+// growth counts only at the margin rate.
+export interface ProfitImpact {
+  monthlyProfitImpact: number;
+  marginPctUsed: number;
+  marginSource: EstimateSource; // "estimated" when the business gave their own margin, "directional" when it's a business-type default
+}
+
 export interface GeneratedResults {
   heatmap: HeatmapRow[];
   opportunities: OpportunityRow[];
   financials: FinancialImpact;
   readinessScore: number;
   maturity: MaturityScores;
+  profitImpact?: ProfitImpact;
   investment: InvestmentEstimate;
   departmentWorkflows: {
     department: DepartmentKey;

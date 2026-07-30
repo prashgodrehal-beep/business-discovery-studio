@@ -97,6 +97,29 @@ export const agentPrerequisites: Record<string, { layer: MaturityLayer; minScore
   "Onboarding Agent": { layer: "process", minScore: 30, note: "Needs a documented onboarding process" },
 };
 
+// --- Business-type-aware modeling ---
+// Two businesses with identical revenue can have wildly different economics.
+// A consultancy scaling sales effectiveness grows revenue close to linearly
+// with capacity; a manufacturer is capped by production capacity — its real
+// AI upside is usually margin improvement, not top-line growth. These are
+// starting points from GrowthAspire's own engagements — tune freely.
+export const defaultMarginPctByBusinessType: Record<string, number> = {
+  service: 55,
+  product: 28,
+  hybrid: 40,
+};
+
+// Revenue-growth ceiling only ever goes UP for service businesses (capacity
+// genuinely scales with effectiveness there) — product/manufacturing keeps
+// today's conservative cap unchanged, since production capacity is the real
+// constraint, not sales effectiveness.
+export const revenueGrowthCapByBusinessType: Record<string, number> = {
+  service: 50,
+  product: 35,
+  hybrid: 40,
+  "": 35, // unknown business type — unchanged default, no regression
+};
+
 export const investmentAssumptions = {
   // One-time setup, tiered by how many agents are in scope — ₹2L-3L band.
   oneTimeInvestmentByAgentCount: (agentCount: number): number => {

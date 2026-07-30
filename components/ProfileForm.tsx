@@ -2,6 +2,7 @@
 
 import { BusinessProfile, TechMaturity } from "@/lib/types";
 import ChipGroup from "./ChipGroup";
+import CurrencyField from "./CurrencyField";
 import DepartmentPicker from "./DepartmentPicker";
 import { painPointOptions, departmentTemplates } from "@/lib/departmentTemplates";
 
@@ -52,14 +53,62 @@ const maturityOptions = [
   { key: "underused", label: "In place, underused" },
   { key: "well_utilized", label: "In place, well-utilized" },
 ];
-const aiPurposeOptions = [
-  { key: "content", label: "Content drafting" },
-  { key: "research", label: "Research" },
-  { key: "customer_replies", label: "Customer replies" },
-  { key: "data_analysis", label: "Data analysis" },
-  { key: "coding", label: "Coding" },
-  { key: "other", label: "Other" },
-];
+const aiPurposeOptionsByDept: Record<string, { key: string; label: string }[]> = {
+  sales: [
+    { key: "lead_scoring", label: "Lead scoring" },
+    { key: "email_drafting", label: "Email drafting" },
+    { key: "crm_data_entry", label: "CRM data entry" },
+    { key: "call_summaries", label: "Call summaries" },
+    { key: "proposal_drafting", label: "Proposal drafting" },
+    { key: "other", label: "Other" },
+  ],
+  marketing: [
+    { key: "content_creation", label: "Content creation" },
+    { key: "ad_copy", label: "Ad copy" },
+    { key: "social_posts", label: "Social media posts" },
+    { key: "seo_research", label: "SEO research" },
+    { key: "campaign_analysis", label: "Campaign analysis" },
+    { key: "other", label: "Other" },
+  ],
+  support: [
+    { key: "ticket_triage", label: "Ticket triage" },
+    { key: "faq_answering", label: "FAQ answering" },
+    { key: "live_chat", label: "Live chat replies" },
+    { key: "sentiment_analysis", label: "Sentiment analysis" },
+    { key: "other", label: "Other" },
+  ],
+  ceo: [
+    { key: "reporting_summaries", label: "Reporting summaries" },
+    { key: "meeting_notes", label: "Meeting notes" },
+    { key: "strategic_research", label: "Strategic research" },
+    { key: "competitive_analysis", label: "Competitive analysis" },
+    { key: "other", label: "Other" },
+  ],
+  customerSuccess: [
+    { key: "onboarding_emails", label: "Onboarding emails" },
+    { key: "health_score", label: "Health-score tracking" },
+    { key: "renewal_reminders", label: "Renewal reminders" },
+    { key: "other", label: "Other" },
+  ],
+  finance: [
+    { key: "invoice_processing", label: "Invoice processing" },
+    { key: "expense_categorization", label: "Expense categorization" },
+    { key: "forecasting", label: "Forecasting" },
+    { key: "other", label: "Other" },
+  ],
+  hr: [
+    { key: "resume_screening", label: "Resume screening" },
+    { key: "interview_scheduling", label: "Interview scheduling" },
+    { key: "policy_qa", label: "Policy Q&A" },
+    { key: "other", label: "Other" },
+  ],
+  operations: [
+    { key: "inventory_tracking", label: "Inventory tracking" },
+    { key: "scheduling", label: "Scheduling" },
+    { key: "vendor_comms", label: "Vendor communication" },
+    { key: "other", label: "Other" },
+  ],
+};
 const aiMaturityOptions = [
   { key: "adhoc", label: "Ad hoc, individual use" },
   { key: "team_habit", label: "Team habit" },
@@ -159,11 +208,22 @@ export default function ProfileForm({ profile, setProfile }: Props) {
             onChange={(v) => setProfile((p) => ({ ...p, company: { ...p.company, businessModel: v[0] as "B2B" | "B2C" | "Both" } }))}
           />
         </Field>
-        <NumberField
+        <Field label="Business type — changes how growth potential and margin are modeled">
+          <ChipGroup
+            multi={false}
+            options={[
+              { key: "service", label: "Service / Consultancy" },
+              { key: "product", label: "Product / Manufacturing" },
+              { key: "hybrid", label: "Hybrid" },
+            ]}
+            selected={profile.company.businessType ? [profile.company.businessType] : []}
+            onChange={(v) => setProfile((p) => ({ ...p, company: { ...p.company, businessType: v[0] as "service" | "product" | "hybrid" } }))}
+          />
+        </Field>
+        <CurrencyField
           label="Annual revenue"
           value={profile.company.annualRevenue}
           onChange={(v) => setProfile((p) => ({ ...p, company: { ...p.company, annualRevenue: v } }))}
-          prefix="₹"
         />
         <Field label="Employee count">
           <ChipGroup
@@ -200,11 +260,10 @@ export default function ProfileForm({ profile, setProfile }: Props) {
             className="field-input"
           />
         </Field>
-        <NumberField
+        <CurrencyField
           label="Average deal size"
           value={profile.customer.averageDealSize}
           onChange={(v) => setProfile((p) => ({ ...p, customer: { ...p.customer, averageDealSize: v } }))}
-          prefix="₹"
         />
         <Field label="Buying cycle">
           <ChipGroup
@@ -312,7 +371,7 @@ export default function ProfileForm({ profile, setProfile }: Props) {
                 <p className="mb-2 text-sm font-semibold text-scan-text">{departmentTemplates[entry.department].label}</p>
                 <Field label="Used for">
                   <ChipGroup
-                    options={aiPurposeOptions}
+                    options={aiPurposeOptionsByDept[entry.department] ?? aiPurposeOptionsByDept.operations}
                     selected={entry.purposes}
                     onChange={(v) =>
                       setProfile((p) => ({
@@ -350,6 +409,18 @@ export default function ProfileForm({ profile, setProfile }: Props) {
           selected={profile.painPoints}
           onChange={(v) => setProfile((p) => ({ ...p, painPoints: v as BusinessProfile["painPoints"] }))}
         />
+        <Field label="Anything else that doesn't fit the list above?">
+          <textarea
+            value={profile.otherPainPoints}
+            onChange={(e) => setProfile((p) => ({ ...p, otherPainPoints: e.target.value }))}
+            placeholder="e.g. High staff turnover in support, or seasonal demand spikes we can't staff for"
+            rows={2}
+            className="field-input"
+          />
+        </Field>
+        <p className="text-xs text-scan-muted">
+          Doesn&apos;t feed the Matrix or Financial Impact numbers — it&apos;s context for you and for the Executive Blueprint narrative.
+        </p>
       </Section>
 
       <Section id="metrics" title="Business metrics">
@@ -379,26 +450,20 @@ export default function ProfileForm({ profile, setProfile }: Props) {
         )}
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <NumberField
-            label="Marketing spend"
+          <CurrencyField
+            label="Marketing spend / month"
             value={profile.metrics.marketingSpendMonthly}
             onChange={(v) => setProfile((p) => ({ ...p, metrics: { ...p.metrics, marketingSpendMonthly: v } }))}
-            prefix="₹"
-            suffix="/ month"
           />
-          <NumberField
-            label="Sales team cost"
+          <CurrencyField
+            label="Sales team cost / month"
             value={profile.metrics.salesTeamCostMonthly}
             onChange={(v) => setProfile((p) => ({ ...p, metrics: { ...p.metrics, salesTeamCostMonthly: v } }))}
-            prefix="₹"
-            suffix="/ month"
           />
-          <NumberField
-            label="Support team cost"
+          <CurrencyField
+            label="Support team cost / month"
             value={profile.metrics.supportTeamCostMonthly}
             onChange={(v) => setProfile((p) => ({ ...p, metrics: { ...p.metrics, supportTeamCostMonthly: v } }))}
-            prefix="₹"
-            suffix="/ month"
           />
         </div>
 
@@ -442,12 +507,11 @@ export default function ProfileForm({ profile, setProfile }: Props) {
           business&apos;s own numbers.
         </p>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <NumberField
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <CurrencyField
             label="Monthly revenue"
             value={profile.metrics.monthlyRevenue}
             onChange={(v) => setProfile((p) => ({ ...p, metrics: { ...p.metrics, monthlyRevenue: v } }))}
-            prefix="₹"
           />
           <NumberField
             label="Growth target, next 6-12 months"
@@ -455,7 +519,17 @@ export default function ProfileForm({ profile, setProfile }: Props) {
             onChange={(v) => setProfile((p) => ({ ...p, metrics: { ...p.metrics, growthTargetPct: v } }))}
             suffix="%"
           />
+          <NumberField
+            label="Gross margin (if known)"
+            value={profile.metrics.grossMarginPct}
+            onChange={(v) => setProfile((p) => ({ ...p, metrics: { ...p.metrics, grossMarginPct: v } }))}
+            suffix="%"
+          />
         </div>
+        <p className="text-xs text-scan-muted">
+          Leave margin blank and a typical default for the business type above gets used instead — clearly labeled as a default, not
+          a calculation, wherever it shows up.
+        </p>
       </Section>
 
       <Section id="data" title="Data & systems readiness">

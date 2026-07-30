@@ -174,6 +174,25 @@ export default function InvestmentROIStep({ profile, results }: { profile: Busin
         </div>
       )}
 
+      {results.profitImpact && (
+        <div className="card mt-6">
+          <h2 className="mb-1 text-lg font-bold text-scan-text">Profit impact</h2>
+          <p className="mb-4 text-sm text-scan-muted">
+            A separate, margin-adjusted view — useful for a CFO-minded room. Cost savings count in full; revenue growth only counts
+            at margin rate. Not blended into the payback above — that stays on a cash basis either way.
+          </p>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <MetricCard
+              label="Margin used"
+              value={`${results.profitImpact.marginPctUsed}%`}
+              subValue={results.profitImpact.marginSource === "estimated" ? "Your own margin" : "Typical default for this business type"}
+              source={results.profitImpact.marginSource}
+            />
+            <MetricCard label="Monthly profit impact" value={`+${formatINR(results.profitImpact.monthlyProfitImpact)}/mo`} />
+          </div>
+        </div>
+      )}
+
       {agentRows.length > 0 && (
         <div className="card mt-6">
           <div className="mb-1 flex flex-wrap items-center justify-between gap-3">

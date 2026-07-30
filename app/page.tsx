@@ -20,6 +20,7 @@ const emptyProfile: BusinessProfile = {
   company: {
     industry: "",
     businessModel: "",
+    businessType: "",
     productsServices: [],
     annualRevenue: undefined,
     employeeCount: "",
@@ -38,6 +39,7 @@ const emptyProfile: BusinessProfile = {
   techStack: {},
   aiAdoption: [],
   painPoints: [],
+  otherPainPoints: "",
   metrics: { headcount: {} },
   dataReadiness: { dataLocation: "", hasDashboards: "", dataQuality: "", notes: "" },
 };

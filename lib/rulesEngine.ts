@@ -15,6 +15,8 @@ import {
   approvalHoursReductionRange,
   supportAutomationCaptureRange,
   investmentAssumptions,
+  defaultMarginPctByBusinessType,
+  revenueGrowthCapByBusinessType,
 } from "./assumptions";
 import { computeMaturityScores, checkFoundation } from "./maturity";
 
@@ -85,12 +87,13 @@ export function generateResults(profile: BusinessProfile): GeneratedResults {
   }
 
   let revenueGrowthPct: SourcedNumber;
+  const growthCap = revenueGrowthCapByBusinessType[profile.company.businessType] ?? 35;
   if (additionalRevenueMonthly?.source === "calculated" && m.monthlyRevenue) {
     // Derive the % FROM the ₹ figure instead of computing both separately —
     // otherwise the % and the ₹ can quietly contradict each other in the UI.
-    revenueGrowthPct = { value: cap((additionalRevenueMonthly.value / m.monthlyRevenue) * 100, 60), source: "calculated" };
+    revenueGrowthPct = { value: cap((additionalRevenueMonthly.value / m.monthlyRevenue) * 100, growthCap + 25), source: "calculated" };
   } else {
-    revenueGrowthPct = { value: cap(sumDirectional(selectedPainPoints, "revenueGrowthPct"), 35), source: "directional" };
+    revenueGrowthPct = { value: cap(sumDirectional(selectedPainPoints, "revenueGrowthPct"), growthCap), source: "directional" };
     if (!additionalRevenueMonthly && m.monthlyRevenue && revenueGrowthPct.value > 0) {
       additionalRevenueMonthly = { value: Math.round(m.monthlyRevenue * (revenueGrowthPct.value / 100)), source: "estimated" };
     }
@@ -167,7 +170,17 @@ export function generateResults(profile: BusinessProfile): GeneratedResults {
   const monthlyBenefit = (additionalRevenueMonthly?.value ?? 0) + (supportCostSavingsMonthly?.value ?? 0);
   const investment = computeInvestment(opportunities.length, monthlyBenefit);
 
-  return { heatmap, opportunities, financials, readinessScore, maturity, investment, departmentWorkflows };
+  // Profit Impact — deliberately kept OUT of the payback calculation above.
+  // Cost savings count in full; revenue growth counts only at margin rate.
+  let profitImpact: GeneratedResults["profitImpact"];
+  if (additionalRevenueMonthly !== undefined || supportCostSavingsMonthly !== undefined) {
+    const marginPctUsed = m.grossMarginPct ?? defaultMarginPctByBusinessType[profile.company.businessType] ?? defaultMarginPctByBusinessType.hybrid;
+    const marginSource: "estimated" | "directional" = m.grossMarginPct ? "estimated" : "directional";
+    const monthlyProfitImpact = Math.round((additionalRevenueMonthly?.value ?? 0) * (marginPctUsed / 100) + (supportCostSavingsMonthly?.value ?? 0));
+    profitImpact = { monthlyProfitImpact, marginPctUsed, marginSource };
+  }
+
+  return { heatmap, opportunities, financials, readinessScore, maturity, profitImpact, investment, departmentWorkflows };
 }
 
 const impactWeight: Record<"High" | "Medium" | "Low", number> = { High: 12, Medium: 7, Low: 4 };
