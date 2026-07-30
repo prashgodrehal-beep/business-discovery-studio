@@ -141,4 +141,11 @@ export const investmentAssumptions = {
   // However many pain points are selected, only recommend starting with this
   // many agents at once — the rest become a phase-2 roadmap, not a launch list.
   recommendedStartCount: 4,
+  // For the "subscription only, no upfront" financing option — the vendor
+  // absorbs the setup cost and recovers it (plus a margin for the deferral
+  // risk) through a higher ongoing rate instead. 1.25 = 25% premium.
+  subscriptionPremiumMultiplier: 1.25,
+  // How many months the "spread" financing option amortizes the one-time
+  // setup cost over, alongside the regular monthly recurring fee.
+  spreadMonths: 6,
 };
