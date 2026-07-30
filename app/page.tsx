@@ -173,6 +173,10 @@ export default function Home() {
                 if (v === "customer_facing" && !next.departments.includes("marketing")) {
                   next.departments = [...next.departments, "marketing"];
                 }
+                if (v === "internal") {
+                  const internalDepts: typeof next.departments = ["hr", "finance", "operations"];
+                  next.departments = Array.from(new Set([...next.departments, ...internalDepts]));
+                }
                 return next;
               })
             }
@@ -183,7 +187,7 @@ export default function Home() {
       case 2:
         return <WorkflowMappingStep results={results} />;
       case 3:
-        return <OpportunityStep results={results} />;
+        return <OpportunityStep profile={profile} results={results} />;
       case 4:
         return <FutureWorkflowStep results={results} />;
       case 5:

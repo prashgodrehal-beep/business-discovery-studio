@@ -38,8 +38,8 @@ export function computeMaturityScores(profile: BusinessProfile): MaturityScores 
 }
 
 // Matches a label (either an Opportunity Matrix name or a workflow step
-// label) against the prerequisite list via substring — so "Lead Agent" and
-// "Lead Agent (Sreeja AI)" both resolve to the same prerequisite.
+// label) against the prerequisite list via substring — so "Lead Intelligence
+// Analyst" and a workflow step of the same name both resolve to the same prerequisite.
 export function checkFoundation(label: string, scores: MaturityScores): { note: string } | undefined {
   const matchKey = Object.keys(agentPrerequisites).find((key) => label.includes(key));
   if (!matchKey) return undefined;

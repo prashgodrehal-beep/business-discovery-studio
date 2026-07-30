@@ -14,7 +14,9 @@ export type PainPointKey =
   | "repetitive_questions"
   | "too_many_approvals"
   | "manual_onboarding"
-  | "poor_campaign_roi";
+  | "poor_campaign_roi"
+  | "cash_flow_delays"
+  | "operational_bottlenecks";
 
 // Optional deep-dive numbers. Everything here is optional — when present,
 // the rules engine uses them to CALCULATE figures bottom-up (funnel math on

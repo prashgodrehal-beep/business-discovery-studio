@@ -84,9 +84,8 @@ export default function StartDiscoveryStep({
           ))}
         </div>
         {focusArea === "internal" && (
-          <p className="mt-3 text-xs text-scan-amber">
-            Heads up — we only have built-out workflow templates for Sales, CEO, Support, and Marketing so far. Operations/HR/Finance
-            are still "coming soon," so this session will lean on the CEO workflow more than the others.
+          <p className="mt-3 text-xs text-scan-teal">
+            HR, Finance, and Operations will be added to the department picker automatically on the next step.
           </p>
         )}
       </div>

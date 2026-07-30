@@ -25,12 +25,14 @@ import { computeMaturityScores, checkFoundation } from "./maturity";
 // with the workflow step labels in departmentTemplates.ts (no "/" combos)
 // so the Maturity Layer's prerequisite matching works via simple substring.
 const opportunityMap: Record<PainPointKey, OpportunityRow> = {
-  unqualified_leads: { opportunity: "Lead Agent", roi: "High", difficulty: "Low", priorityStars: 5 },
-  manual_followup: { opportunity: "Follow-up Agent", roi: "High", difficulty: "Medium", priorityStars: 4 },
-  repetitive_questions: { opportunity: "Support Agent", roi: "High", difficulty: "Low", priorityStars: 4 },
+  unqualified_leads: { opportunity: "Lead Intelligence Analyst", roi: "High", difficulty: "Low", priorityStars: 5 },
+  manual_followup: { opportunity: "Follow-up Coordinator", roi: "High", difficulty: "Medium", priorityStars: 4 },
+  repetitive_questions: { opportunity: "Knowledge Resolver", roi: "High", difficulty: "Low", priorityStars: 4 },
   too_many_approvals: { opportunity: "Supervisor Agent (CEO Command Center)", roi: "Medium", difficulty: "Medium", priorityStars: 3 },
-  manual_onboarding: { opportunity: "Onboarding Agent", roi: "Medium", difficulty: "Medium", priorityStars: 3 },
-  poor_campaign_roi: { opportunity: "Ad Spend Agent", roi: "Medium", difficulty: "Medium", priorityStars: 3 },
+  manual_onboarding: { opportunity: "Onboarding Guide", roi: "Medium", difficulty: "Medium", priorityStars: 3 },
+  poor_campaign_roi: { opportunity: "Campaign Optimizer", roi: "Medium", difficulty: "Medium", priorityStars: 3 },
+  cash_flow_delays: { opportunity: "Collections Coordinator", roi: "High", difficulty: "Medium", priorityStars: 4 },
+  operational_bottlenecks: { opportunity: "Exception Monitor", roi: "Medium", difficulty: "Medium", priorityStars: 3 },
 };
 
 function cap(n: number, max: number) {

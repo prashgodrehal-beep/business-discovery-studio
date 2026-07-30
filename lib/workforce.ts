@@ -23,7 +23,9 @@ export interface WorkforceOrg {
 
 // Pulls the org structure straight out of the same department workflow config
 // that drives Deliverables 2/5/6 — no separate hardcoded roster to keep in sync.
-// Only steps whose label contains "Agent" count as a named specialist.
+// Every AI-owned step counts as a named specialist — roles are named after
+// the job they perform (Lead Intelligence Analyst, Collections Coordinator),
+// so there's no more generic "Agent" suffix to filter on.
 // However many pain points are selected, only the top N (by priority) are
 // tagged "start" — the rest become "priority" (relevant, but phase 2) or
 // "roadmap" (not tied to a selected pain point at all). Independently, every
@@ -38,7 +40,7 @@ export function buildWorkforceOrg(departmentWorkflows: GeneratedResults["departm
 
   for (const dept of departmentWorkflows) {
     for (const step of dept.future) {
-      if (step.owner === "ai" && step.label.includes("Agent") && !seen.has(step.label)) {
+      if (step.owner === "ai" && !seen.has(step.label)) {
         seen.add(step.label);
         if (step.label.startsWith("Supervisor Agent")) {
           supervisorLabel = step.label;

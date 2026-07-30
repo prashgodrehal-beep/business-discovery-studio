@@ -42,6 +42,8 @@ export const directionalRanges: Record<string, PainPointRange> = {
   too_many_approvals: { ceoHoursSavedPerWeek: [5, 12], productivityBoostPct: [5, 10] },
   manual_onboarding: { ceoHoursSavedPerWeek: [2, 4], supportCostReductionPct: [5, 12], productivityBoostPct: [2, 5] },
   poor_campaign_roi: { revenueGrowthPct: [2, 5], productivityBoostPct: [2, 4] },
+  cash_flow_delays: { ceoHoursSavedPerWeek: [3, 6], productivityBoostPct: [3, 6] },
+  operational_bottlenecks: { ceoHoursSavedPerWeek: [2, 5], productivityBoostPct: [3, 7] },
 };
 
 // When the business gives us their own approval-hours baseline, this is the
@@ -61,12 +63,14 @@ export const supportAutomationCaptureRange: [number, number] = [0.7, 0.85];
 // Not additive to the Financial Impact numbers — a different way of valuing
 // the same agent, shown side by side so the room can pick whichever lands.
 export const agentHumanEquivalent: Record<string, { roleLabel: string; department: string; fraction: [number, number] }> = {
-  "Lead Agent": { roleLabel: "SDR / lead qualifier", department: "sales", fraction: [0.5, 1.0] },
-  "Follow-up Agent": { roleLabel: "sales follow-up coordinator", department: "sales", fraction: [0.4, 0.8] },
-  "Support Agent": { roleLabel: "support agent", department: "support", fraction: [0.6, 1.0] },
-  "Ad Spend Agent": { roleLabel: "marketing analyst", department: "marketing", fraction: [0.3, 0.6] },
+  "Lead Intelligence Analyst": { roleLabel: "SDR / lead qualifier", department: "sales", fraction: [0.5, 1.0] },
+  "Follow-up Coordinator": { roleLabel: "sales follow-up coordinator", department: "sales", fraction: [0.4, 0.8] },
+  "Knowledge Resolver": { roleLabel: "support agent", department: "support", fraction: [0.6, 1.0] },
+  "Campaign Optimizer": { roleLabel: "marketing analyst", department: "marketing", fraction: [0.3, 0.6] },
   "Supervisor Agent (CEO Command Center)": { roleLabel: "executive assistant / chief of staff", department: "ceo", fraction: [0.3, 0.5] },
-  "Onboarding Agent": { roleLabel: "HR coordinator", department: "hr", fraction: [0.3, 0.6] },
+  "Onboarding Guide": { roleLabel: "HR coordinator", department: "hr", fraction: [0.3, 0.6] },
+  "Collections Coordinator": { roleLabel: "AR / collections specialist", department: "finance", fraction: [0.4, 0.8] },
+  "Exception Monitor": { roleLabel: "operations coordinator", department: "operations", fraction: [0.4, 0.7] },
 };
 
 // Fallback fully-loaded monthly cost band per department when we don't have
@@ -83,18 +87,20 @@ export const typicalFullyLoadedMonthlyCost: Record<string, [number, number]> = {
 };
 
 // --- Maturity Layer prerequisites (Founder Evolution Pyramid / Decision OS) ---
-// An agent is only as good as the foundation under it — a Follow-up Agent is
-// useless without a CRM to follow up from; a Data Analyst Agent is useless
+// An agent is only as good as the foundation under it — a Follow-up
+// Coordinator is useless without a CRM to follow up from; a Deal Coach is useless
 // without dashboards to analyze. Keys are matched against both the
 // Opportunity Matrix name and the workflow step label via string.includes(),
 // so keep them as the short, branding-free core phrase both share.
 export const agentPrerequisites: Record<string, { layer: MaturityLayer; minScore: number; note: string }> = {
-  "Lead Agent": { layer: "process", minScore: 40, note: "Needs a CRM or clear lead-tracking process in place" },
-  "Follow-up Agent": { layer: "process", minScore: 40, note: "Needs a CRM or clear process to know who to follow up with" },
-  "Support Agent": { layer: "process", minScore: 30, note: "Needs at least a basic knowledge base or FAQ doc" },
+  "Lead Intelligence Analyst": { layer: "process", minScore: 40, note: "Needs a CRM or clear lead-tracking process in place" },
+  "Follow-up Coordinator": { layer: "process", minScore: 40, note: "Needs a CRM or clear process to know who to follow up with" },
+  "Knowledge Resolver": { layer: "process", minScore: 30, note: "Needs at least a basic knowledge base or FAQ doc" },
   "Supervisor Agent": { layer: "visibility", minScore: 50, note: "Needs dashboards/reporting to make decisions from" },
-  "Ad Spend Agent": { layer: "visibility", minScore: 40, note: "Needs campaign data/dashboards to analyze" },
-  "Onboarding Agent": { layer: "process", minScore: 30, note: "Needs a documented onboarding process" },
+  "Campaign Optimizer": { layer: "visibility", minScore: 40, note: "Needs campaign data/dashboards to analyze" },
+  "Onboarding Guide": { layer: "process", minScore: 30, note: "Needs a documented onboarding process" },
+  "Collections Coordinator": { layer: "process", minScore: 35, note: "Needs an invoicing/accounting system to track against" },
+  "Exception Monitor": { layer: "visibility", minScore: 40, note: "Needs monitoring/dashboards to detect exceptions from" },
 };
 
 // --- Business-type-aware modeling ---
