@@ -1,9 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { BusinessProfile, GeneratedResults } from "@/lib/types";
 import { StepHeading } from "../ResultsPrimitives";
 
 export default function BlueprintStep({ profile, results }: { profile: BusinessProfile; results: GeneratedResults }) {
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
   const deploymentOrder = [...results.opportunities].sort((a, b) => b.priorityStars - a.priorityStars);
   const industryLabel = profile.company.industry || "this business";
 
@@ -13,6 +16,32 @@ export default function BlueprintStep({ profile, results }: { profile: BusinessP
       : results.readinessScore >= 55
       ? "solid, well-defined AI opportunity"
       : "early-stage opportunity — foundational fixes come first";
+
+  async function handleDownload() {
+    setDownloading(true);
+    setDownloadError(null);
+    try {
+      const res = await fetch("/api/pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profile, results }),
+      });
+      if (!res.ok) throw new Error("PDF generation failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `ai-transformation-blueprint-${industryLabel.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      setDownloadError("Couldn't generate the PDF — try again, or check the server logs if it keeps failing.");
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   return (
     <div>
@@ -65,14 +94,11 @@ export default function BlueprintStep({ profile, results }: { profile: BusinessP
           >
             Book strategy call
           </a>
-          <button
-            disabled
-            title="PDF export ships in the next build phase"
-            className="btn-secondary opacity-60"
-          >
-            Download PDF report
+          <button onClick={handleDownload} disabled={downloading} className="btn-secondary disabled:opacity-60">
+            {downloading ? "Generating…" : "Download PDF report"}
           </button>
         </div>
+        {downloadError && <p className="mt-3 text-sm text-scan-amber">{downloadError}</p>}
       </div>
     </div>
   );
