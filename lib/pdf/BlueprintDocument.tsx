@@ -116,7 +116,13 @@ export default function BlueprintDocument({ profile, results }: { profile: Busin
   const f = results.financials;
   const deploymentOrder = [...results.opportunities].sort((a, b) => b.priorityStars - a.priorityStars);
   const org = buildWorkforceOrg(results.departmentWorkflows, results.maturity);
-  const financingOptions = results.investment.activeAgentCount > 0 ? computeFinancingOptions(results.investment) : [];
+  const targetAnnualProfitIncrease =
+    profile.metrics.growthTargetPct && profile.metrics.monthlyRevenue && results.profitImpact
+      ? Math.round(profile.metrics.monthlyRevenue * (profile.metrics.growthTargetPct / 100) * (results.profitImpact.marginPctUsed / 100) * 12)
+      : results.profitImpact
+      ? results.profitImpact.monthlyProfitImpact * 12
+      : undefined;
+  const financingOptions = results.investment.activeAgentCount > 0 ? computeFinancingOptions(results.investment, targetAnnualProfitIncrease, 10) : [];
   const archetypeLabels = getArchetypeLabels(profile.industryArchetype);
   const today = new Date().toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" });
 
@@ -304,6 +310,12 @@ export default function BlueprintDocument({ profile, results }: { profile: Busin
             <MetricBox label="Their 6-12mo target" value={`${f.revenueGrowth.growthTargetPct}%`} subValue={`AI closes ~${f.revenueGrowth.pctOfTargetClosed}%`} />
           )}
         </View>
+        {f.revenueGrowth.impliedDealVolumeIncreasePct !== undefined && (
+          <Text style={[s.muted, { color: color.amber, marginBottom: 10 }]}>
+            ⚠ This assumes closing ≈{f.revenueGrowth.impliedDealVolumeIncreasePct}% more {archetypeLabels.dealUnit}s than today —
+            worth sanity-checking with the client before presenting as a committed number.
+          </Text>
+        )}
         <Text style={s.h3}>Productivity, cost, and experience</Text>
         <View style={s.metricGrid}>
           <MetricBox label="CEO time saved" value={`${f.productivityGains.ceoHoursSavedPerWeek.value} hrs/wk`} source={f.productivityGains.ceoHoursSavedPerWeek.source} />
@@ -350,8 +362,9 @@ export default function BlueprintDocument({ profile, results }: { profile: Busin
                 <View key={i} style={{ flex: 1, backgroundColor: color.bg, borderRadius: 6, padding: 8 }}>
                   <Text style={[s.td, { fontFamily: "Helvetica-Bold" }]}>{opt.label}</Text>
                   <Text style={s.muted}>Due at signing: {opt.upfrontDue > 0 ? formatINR(opt.upfrontDue) : "₹0"}</Text>
-                  <Text style={s.muted}>Monthly: {formatINR(opt.monthlyCost)}</Text>
-                  <Text style={s.muted}>First-year total: {formatINR(opt.totalFirstYearCost)}</Text>
+                  <Text style={s.muted}>{opt.isContingent ? "Avg monthly if target hit" : "Monthly"}: {formatINR(opt.monthlyCost)}</Text>
+                  <Text style={s.muted}>{opt.isContingent ? "Est. " : ""}First-year total: {formatINR(opt.totalFirstYearCost)}</Text>
+                  {opt.sharePct !== undefined && <Text style={[s.muted, { color: color.teal }]}>Share: {opt.sharePct}% of profit delivered</Text>}
                 </View>
               ))}
             </View>

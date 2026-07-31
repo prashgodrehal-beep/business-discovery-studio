@@ -126,6 +126,20 @@ export const revenueGrowthCapByBusinessType: Record<string, number> = {
   "": 35, // unknown business type — unchanged default, no regression
 };
 
+// A % of revenue cap alone isn't enough for high-ticket, low-volume
+// businesses (real estate, enterprise sales) — a handful of "recovered"
+// deals can look like a huge revenue % simply because each deal is huge,
+// even though it implies an implausible jump in how many deals actually
+// close. This caps recovered deal volume as a fraction of the business's
+// OWN implied existing deal volume (monthlyRevenue ÷ averageDealSize) —
+// whichever cap (this or the revenue %) binds tighter wins.
+export const maxRecoveredDealsFractionByBusinessType: Record<string, number> = {
+  service: 0.3,
+  product: 0.2,
+  hybrid: 0.25,
+  "": 0.25,
+};
+
 export const investmentAssumptions = {
   // One-time setup, tiered by how many agents are in scope — ₹2L-3L band.
   oneTimeInvestmentByAgentCount: (agentCount: number): number => {
@@ -148,4 +162,20 @@ export const investmentAssumptions = {
   // How many months the "spread" financing option amortizes the one-time
   // setup cost over, alongside the regular monthly recurring fee.
   spreadMonths: 6,
+  // --- Fixed + Profit Share (gainshare) ---
+  // A small guaranteed fixed fee, with the rest of the engagement's value
+  // recovered through a share of the profit increase actually delivered —
+  // the standard "value-based pricing" structure real consulting firms
+  // (McKinsey, PwC, BCG) use for at-risk / success-fee engagements.
+  //
+  // The % is an ANCHOR within a normal negotiating range, not back-solved
+  // to match the fixed-fee price — that equivalence math breaks down for a
+  // lightweight AI subscription against potentially huge profit upside (a
+  // tiny % of a huge number can still dwarf what a fixed deal would cost).
+  // Real gain-share deals accept that the dollar amount scales with
+  // delivered value; what stays stable is the %, not the total.
+  profitShareFixedFee: 200000,
+  profitShareDefaultPct: 10,
+  profitShareMinPct: 5,
+  profitShareMaxPct: 20,
 };

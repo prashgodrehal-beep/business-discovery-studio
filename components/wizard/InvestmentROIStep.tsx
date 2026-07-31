@@ -6,6 +6,7 @@ import { formatINR } from "@/lib/format";
 import { computeAgentProductivity } from "@/lib/agentProductivity";
 import { computeFinancingOptions, buildScalingTable } from "@/lib/investmentOptions";
 import { getArchetypeLabels } from "@/lib/industryArchetypes";
+import CurrencyField from "../CurrencyField";
 import { MetricCard, MetricGroup, StepHeading } from "../ResultsPrimitives";
 
 export default function InvestmentROIStep({ profile, results }: { profile: BusinessProfile; results: GeneratedResults }) {
@@ -17,7 +18,30 @@ export default function InvestmentROIStep({ profile, results }: { profile: Busin
   const totalAgentValue = agentRows.reduce((sum, r) => sum + r.monthlyValue, 0);
   const totalAgentCost = agentRows.reduce((sum, r) => sum + r.agentMonthlyCost, 0);
   const valueMultiple = totalAgentCost > 0 ? Math.round((totalAgentValue / totalAgentCost) * 10) / 10 : 0;
-  const financingOptions = results.investment.activeAgentCount > 0 ? computeFinancingOptions(results.investment) : [];
+
+  // The profit-share option needs a target annual profit increase to compute
+  // a share % from. Prefer the client's OWN stated ambition (their 6-12mo
+  // growth target, converted through margin) — anchoring the deal to what
+  // they said they want is the more persuasive, "McKinsey-style" basis.
+  // Falls back to our own modeled Profit Impact estimate if they didn't give
+  // a growth target. Either way, it's editable live in the room below.
+  const defaultTargetBasis: "their_target" | "modeled_estimate" | "none" =
+    m.growthTargetPct && m.monthlyRevenue && results.profitImpact
+      ? "their_target"
+      : results.profitImpact
+      ? "modeled_estimate"
+      : "none";
+  const defaultTargetAnnualProfitIncrease =
+    defaultTargetBasis === "their_target" && m.growthTargetPct && m.monthlyRevenue && results.profitImpact
+      ? Math.round(m.monthlyRevenue * (m.growthTargetPct / 100) * (results.profitImpact.marginPctUsed / 100) * 12)
+      : defaultTargetBasis === "modeled_estimate" && results.profitImpact
+      ? results.profitImpact.monthlyProfitImpact * 12
+      : undefined;
+  const [targetOverride, setTargetOverride] = useState<number | undefined>(undefined);
+  const targetAnnualProfitIncrease = targetOverride ?? defaultTargetAnnualProfitIncrease;
+  const [sharePct, setSharePct] = useState(10);
+
+  const financingOptions = results.investment.activeAgentCount > 0 ? computeFinancingOptions(results.investment, targetAnnualProfitIncrease, sharePct) : [];
   const scalingTable = buildScalingTable(results.investment.activeAgentCount || 4);
 
   const hasCurrencyFigures =
@@ -49,6 +73,12 @@ export default function InvestmentROIStep({ profile, results }: { profile: Busin
           />
           {f.revenueGrowth.growthTargetPct !== undefined && (
             <MetricCard label="Their 6-12mo target" value={`${f.revenueGrowth.growthTargetPct}%`} subValue={`AI closes ~${f.revenueGrowth.pctOfTargetClosed}% of that gap`} />
+          )}
+          {f.revenueGrowth.impliedDealVolumeIncreasePct !== undefined && (
+            <div className="col-span-full rounded-md bg-scan-amberDim px-3 py-2 text-xs text-scan-amber">
+              ⚠ This assumes closing ≈{f.revenueGrowth.impliedDealVolumeIncreasePct}% more {dealUnitLabel} than today — worth
+              sanity-checking with the client before presenting it as a committed number.
+            </div>
           )}
         </MetricGroup>
       ),
@@ -183,22 +213,66 @@ export default function InvestmentROIStep({ profile, results }: { profile: Busin
         <div className="card mt-6">
           <h2 className="mb-1 text-lg font-bold text-scan-text">Investment options</h2>
           <p className="mb-4 text-sm text-scan-muted">
-            Same underlying investment, structured three ways — the way a consulting engagement typically offers Fixed /
-            Fixed+Variable / Retainer pricing. Pick whichever fits the room's appetite for upfront commitment.
+            Same underlying investment, structured three ways — Fixed Fee / Fixed + Profit Share / Retainer, the same trio real
+            consulting engagements (McKinsey, PwC, BCG) use for value-based pricing.
           </p>
+
+          {defaultTargetBasis !== "none" && (
+            <div className="mb-4 rounded-xl border border-scan-border p-3">
+              <p className="mb-2 text-xs text-scan-muted">
+                Target annual profit increase — used to compute the Fixed + Profit Share amount below.{" "}
+                {targetOverride === undefined && (
+                  <span className="text-scan-teal">
+                    ({defaultTargetBasis === "their_target" ? "from their stated 6-12mo growth target × margin" : "from our modeled Profit Impact estimate"})
+                  </span>
+                )}
+              </p>
+              <CurrencyField
+                label=""
+                value={targetOverride ?? defaultTargetAnnualProfitIncrease}
+                onChange={(v) => setTargetOverride(v)}
+              />
+              <p className="mb-2 mt-3 text-xs text-scan-muted">Proposed share of profit delivered</p>
+              <div className="flex gap-1 rounded-md border border-scan-border p-0.5" style={{ width: "fit-content" }}>
+                {[5, 10, 15, 20].map((pct) => (
+                  <button
+                    key={pct}
+                    onClick={() => setSharePct(pct)}
+                    className={`focus-ring rounded px-2.5 py-1 text-xs ${sharePct === pct ? "bg-scan-tealDim text-scan-teal" : "text-scan-muted"}`}
+                  >
+                    {pct}%
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             {financingOptions.map((opt) => (
-              <div key={opt.key} className="card-light">
+              <div key={opt.key} className={`card-light ${opt.isContingent ? "border border-scan-teal" : ""}`}>
                 <p className="text-sm font-bold text-scan-text">{opt.label}</p>
                 <p className="mb-3 text-xs text-scan-muted">{opt.description}</p>
                 <p className="text-xs text-scan-muted">Due at signing</p>
                 <p className="mb-2 text-lg font-extrabold text-scan-text">{opt.upfrontDue > 0 ? formatINR(opt.upfrontDue) : "₹0"}</p>
-                <p className="text-xs text-scan-muted">Monthly</p>
+                <p className="text-xs text-scan-muted">{opt.isContingent ? `Average monthly if target is hit` : "Monthly"}</p>
                 <p className="mb-2 text-lg font-extrabold text-scan-text">{formatINR(opt.monthlyCost)}</p>
-                <p className="text-xs text-scan-muted">First-year total: {formatINR(opt.totalFirstYearCost)}</p>
+                <p className="text-xs text-scan-muted">
+                  {opt.isContingent ? "Estimated" : ""} first-year total: {formatINR(opt.totalFirstYearCost)}
+                </p>
+                {opt.sharePct !== undefined && (
+                  <p className="mt-2 rounded-md bg-scan-tealDim px-2 py-1 text-xs text-scan-teal">
+                    Proposed share: {opt.sharePct}% of profit increase delivered
+                  </p>
+                )}
               </div>
             ))}
           </div>
+          {financingOptions.some((o) => o.isContingent) && (
+            <p className="mt-3 text-xs text-scan-muted">
+              The share % is a starting anchor for negotiation (5-20% is the normal range for success-fee deals), not back-solved to
+              match the fixed price — the dollar amount scales with delivered value, which is the actual point of a gainshare deal.
+            </p>
+          )}
 
           <h3 className="mb-2 mt-6 text-sm font-bold text-scan-text">How cost scales with more agents</h3>
           <p className="mb-3 text-xs text-scan-muted">The marginal cost of the next agent, shown transparently — not a single flat number in isolation.</p>
