@@ -17,6 +17,7 @@ import {
   investmentAssumptions,
   defaultMarginPctByBusinessType,
   revenueGrowthCapByBusinessType,
+  maxRecoveredDealsFractionByBusinessType,
 } from "./assumptions";
 import { computeMaturityScores, checkFoundation } from "./maturity";
 
@@ -86,6 +87,7 @@ export function generateResults(profile: BusinessProfile): GeneratedResults {
 
   let additionalDealsPerMonth: SourcedNumber | undefined;
   let additionalRevenueMonthly: SourcedNumber | undefined;
+  let impliedDealVolumeIncreasePct: number | undefined;
 
   // Calculated tier: keep the deal count FRACTIONAL all the way through the
   // ₹ math — rounding it to a whole deal before multiplying by a large deal
@@ -93,7 +95,24 @@ export function generateResults(profile: BusinessProfile): GeneratedResults {
   // figure by a full deal size in one step). Only round for display text.
   if (m.monthlyLeads && m.conversionRatePct && leadLeakageReductionPct.value > 0) {
     const recoveredLeads = m.monthlyLeads * (leadLeakageReductionPct.value / 100);
-    const dealsFractional = recoveredLeads * (m.conversionRatePct / 100);
+    let dealsFractional = recoveredLeads * (m.conversionRatePct / 100);
+
+    // Deal-volume-relative cap — the real constraint for high-ticket,
+    // low-volume businesses (real estate, enterprise sales): a handful of
+    // "recovered" deals can look like a huge revenue % simply because each
+    // deal is huge, even though it implies an implausible jump in how many
+    // deals actually close. Cap recovered deals as a fraction of the
+    // business's OWN existing deal volume — whichever cap (this or the
+    // revenue % cap below) binds tighter wins.
+    if (m.monthlyRevenue && profile.customer.averageDealSize) {
+      const existingDealsPerMonth = m.monthlyRevenue / profile.customer.averageDealSize;
+      if (existingDealsPerMonth > 0) {
+        const maxFraction = maxRecoveredDealsFractionByBusinessType[profile.company.businessType] ?? 0.25;
+        dealsFractional = Math.min(dealsFractional, existingDealsPerMonth * maxFraction);
+        impliedDealVolumeIncreasePct = Math.round((dealsFractional / existingDealsPerMonth) * 100);
+      }
+    }
+
     additionalDealsPerMonth = { value: Math.round(dealsFractional * 10) / 10, source: "calculated" };
 
     if (profile.customer.averageDealSize) {
@@ -119,6 +138,9 @@ export function generateResults(profile: BusinessProfile): GeneratedResults {
       // deals, quietly contradicting each other again.
       if (additionalDealsPerMonth) {
         additionalDealsPerMonth = { value: Math.round(additionalDealsPerMonth.value * scaleFactor * 10) / 10, source: "calculated" };
+        if (impliedDealVolumeIncreasePct !== undefined) {
+          impliedDealVolumeIncreasePct = Math.round(impliedDealVolumeIncreasePct * scaleFactor);
+        }
       }
     }
   }
@@ -176,7 +198,7 @@ export function generateResults(profile: BusinessProfile): GeneratedResults {
 
   const financials: FinancialImpact = {
     costSavings: { supportCostReductionPct, supportCostSavingsMonthly },
-    revenueGrowth: { revenueGrowthPct, leadLeakageReductionPct, additionalRevenueMonthly, additionalDealsPerMonth },
+    revenueGrowth: { revenueGrowthPct, leadLeakageReductionPct, additionalRevenueMonthly, additionalDealsPerMonth, impliedDealVolumeIncreasePct },
     productivityGains: { ceoHoursSavedPerWeek, productivityBoostPct },
     customerExperience: { responseTimeReductionPct, currentResponseTimeHours, projectedResponseTimeHours },
   };

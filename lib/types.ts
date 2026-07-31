@@ -187,6 +187,7 @@ export interface FinancialImpact {
     additionalDealsPerMonth?: SourcedNumber;
     growthTargetPct?: number;
     pctOfTargetClosed?: number;
+    impliedDealVolumeIncreasePct?: number; // recovered deals as a % of existing deal volume — the real check for high-ticket, low-volume businesses
   };
   productivityGains: {
     ceoHoursSavedPerWeek: SourcedNumber;
